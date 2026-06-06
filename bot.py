@@ -247,9 +247,12 @@ async def cmd_start(message: types.Message):
 
 
 # ─── App setup ─────────────────────────────────────────────────────────────────
-
+async def serve_index(request: web.Request):
+    return web.FileResponse('index.html')
 def create_app():
     app = web.Application()
+    app.router.add_get('/', serve_index)
+    app.router.add_get('/index.html', serve_index)
     app.router.add_get("/api/me", api_me)
     app.router.add_get("/api/users", api_users)
     app.router.add_post("/api/set-role", api_set_role)
