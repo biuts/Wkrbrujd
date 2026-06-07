@@ -5,7 +5,7 @@ from datetime import datetime
 
 DATABASE_URL = os.getenv("DATABASE_URL")
 
-OWNER_ID = 5497334125
+OWNER_ID = int(os.getenv("OWNER_ID", "5497334125"))
 
 ROLES = {
     "owner": 6,
@@ -28,6 +28,14 @@ ROLE_NAMES = {
 ADMIN_MIN_LEVEL = 2
 ROLE_MANAGE_MIN_LEVEL = 4
 
+# Статусы жалоб
+STATUS_NAMES = {
+    "open": "Открыта",
+    "reviewing": "На рассмотрении",
+    "approved": "Одобрено",
+    "closed": "Закрыта",
+}
+
 
 def get_conn():
     conn = psycopg2.connect(DATABASE_URL, cursor_factory=RealDictCursor)
@@ -37,7 +45,6 @@ def get_conn():
 def init_db():
     conn = get_conn()
     c = conn.cursor()
-
     c.execute("""
         CREATE TABLE IF NOT EXISTS users (
             telegram_id BIGINT PRIMARY KEY,
@@ -48,7 +55,6 @@ def init_db():
             created_at TEXT DEFAULT CURRENT_TIMESTAMP
         )
     """)
-
     c.execute("""
         CREATE TABLE IF NOT EXISTS complaints (
             id SERIAL PRIMARY KEY,
@@ -65,13 +71,11 @@ def init_db():
             updated_at TEXT DEFAULT CURRENT_TIMESTAMP
         )
     """)
-
     c.execute("""
         INSERT INTO users (telegram_id, username, full_name, role)
         VALUES (%s, 'owner', 'Owner', 'owner')
         ON CONFLICT (telegram_id) DO NOTHING
     """, (OWNER_ID,))
-
     conn.commit()
     conn.close()
 
@@ -80,17 +84,14 @@ def upsert_user(telegram_id: int, username: str, full_name: str):
     conn = get_conn()
     c = conn.cursor()
     role = "owner" if telegram_id == OWNER_ID else None
-
     c.execute("SELECT role FROM users WHERE telegram_id = %s", (telegram_id,))
     existing = c.fetchone()
     if existing:
         c.execute("UPDATE users SET username = %s, full_name = %s WHERE telegram_id = %s",
                   (username, full_name, telegram_id))
     else:
-        c.execute("""
-            INSERT INTO users (telegram_id, username, full_name, role)
-            VALUES (%s, %s, %s, %s)
-        """, (telegram_id, username, full_name, role or "user"))
+        c.execute("INSERT INTO users (telegram_id, username, full_name, role) VALUES (%s, %s, %s, %s)",
+                  (telegram_id, username, full_name, role or "user"))
     conn.commit()
     conn.close()
 
@@ -113,39 +114,43 @@ def get_all_users():
     return [dict(r) for r in rows]
 
 
+def get_admins():
+    """Возвращает всех пользователей с уровнем >= ADMIN_MIN_LEVEL"""
+    conn = get_conn()
+    c = conn.cursor()
+    admin_roles = [role for role, level in ROLES.items() if level >= ADMIN_MIN_LEVEL]
+    placeholders = ",".join(["%s"] * len(admin_roles))
+    c.execute(f"SELECT * FROM users WHERE role IN ({placeholders}) AND is_blocked = 0", admin_roles)
+    rows = c.fetchall()
+    conn.close()
+    return [dict(r) for r in rows]
+
+
 def set_user_role(admin_id: int, target_id: int, new_role: str) -> dict:
     conn = get_conn()
     c = conn.cursor()
-
     c.execute("SELECT * FROM users WHERE telegram_id = %s", (admin_id,))
     admin = c.fetchone()
     c.execute("SELECT * FROM users WHERE telegram_id = %s", (target_id,))
     target = c.fetchone()
-
     if not admin or not target:
         conn.close()
         return {"ok": False, "error": "Пользователь не найден"}
-
     admin_level = ROLES.get(admin["role"], 0)
     target_level = ROLES.get(target["role"], 0)
     new_role_level = ROLES.get(new_role, 0)
-
     if target["telegram_id"] == OWNER_ID:
         conn.close()
         return {"ok": False, "error": "Нельзя изменить роль владельца"}
-
     if admin_level < ROLE_MANAGE_MIN_LEVEL:
         conn.close()
         return {"ok": False, "error": "Недостаточно прав для изменения ролей"}
-
     if new_role_level >= admin_level:
         conn.close()
         return {"ok": False, "error": "Нельзя выдать роль выше или равную своей"}
-
     if target_level >= admin_level:
         conn.close()
         return {"ok": False, "error": "Нельзя изменить роль пользователя с равным или более высоким уровнем"}
-
     c.execute("UPDATE users SET role = %s WHERE telegram_id = %s", (new_role, target_id))
     conn.commit()
     conn.close()
@@ -155,31 +160,24 @@ def set_user_role(admin_id: int, target_id: int, new_role: str) -> dict:
 def set_user_blocked(admin_id: int, target_id: int, blocked: bool) -> dict:
     conn = get_conn()
     c = conn.cursor()
-
     c.execute("SELECT * FROM users WHERE telegram_id = %s", (admin_id,))
     admin = c.fetchone()
     c.execute("SELECT * FROM users WHERE telegram_id = %s", (target_id,))
     target = c.fetchone()
-
     if not admin or not target:
         conn.close()
         return {"ok": False, "error": "Пользователь не найден"}
-
     admin_level = ROLES.get(admin["role"], 0)
     target_level = ROLES.get(target["role"], 0)
-
     if target["telegram_id"] == OWNER_ID:
         conn.close()
         return {"ok": False, "error": "Нельзя заблокировать владельца"}
-
     if admin_level < ROLE_MANAGE_MIN_LEVEL:
         conn.close()
         return {"ok": False, "error": "Недостаточно прав"}
-
     if target_level >= admin_level:
         conn.close()
         return {"ok": False, "error": "Нельзя заблокировать пользователя с равным или более высоким уровнем"}
-
     c.execute("UPDATE users SET is_blocked = %s WHERE telegram_id = %s", (1 if blocked else 0, target_id))
     conn.commit()
     conn.close()
@@ -229,10 +227,9 @@ def get_user_complaints(reporter_id: int):
     conn = get_conn()
     c = conn.cursor()
     c.execute("""
-        SELECT c.*, u.full_name as responder_name, u.username as responder_username, u2.role as responder_role
+        SELECT c.*, u.full_name as responder_name, u.username as responder_username
         FROM complaints c
         LEFT JOIN users u ON c.responded_by = u.telegram_id
-        LEFT JOIN users u2 ON c.responded_by = u2.telegram_id
         WHERE c.reporter_id = %s
         ORDER BY c.created_at DESC
     """, (reporter_id,))
@@ -241,7 +238,8 @@ def get_user_complaints(reporter_id: int):
     return [dict(r) for r in rows]
 
 
-def respond_complaint(admin_id: int, complaint_id: int, response: str, close: bool = True, status: str = "closed") -> dict:
+def respond_complaint(admin_id: int, complaint_id: int, response: str,
+                      close: bool = True, new_status: str = None) -> dict:
     conn = get_conn()
     c = conn.cursor()
     c.execute("SELECT * FROM users WHERE telegram_id = %s", (admin_id,))
@@ -249,17 +247,32 @@ def respond_complaint(admin_id: int, complaint_id: int, response: str, close: bo
     if not admin:
         conn.close()
         return {"ok": False, "error": "Администратор не найден"}
-    admin_level = ROLES.get(admin["role"], 0)
-    if admin_level < ADMIN_MIN_LEVEL:
+    if ROLES.get(admin["role"], 0) < ADMIN_MIN_LEVEL:
         conn.close()
         return {"ok": False, "error": "Недостаточно прав"}
-
-    status = status if status else ("closed" if close else "open")
+    if new_status is None:
+        new_status = "closed" if close else "open"
     c.execute("""
         UPDATE complaints
         SET admin_response = %s, responded_by = %s, status = %s, updated_at = CURRENT_TIMESTAMP
         WHERE id = %s
-    """, (response, admin_id, status, complaint_id))
+    """, (response, admin_id, new_status, complaint_id))
+    conn.commit()
+    conn.close()
+    return {"ok": True}
+
+
+def set_complaint_status(admin_id: int, complaint_id: int, new_status: str) -> dict:
+    conn = get_conn()
+    c = conn.cursor()
+    c.execute("SELECT * FROM users WHERE telegram_id = %s", (admin_id,))
+    admin = c.fetchone()
+    if not admin or ROLES.get(admin["role"], 0) < ADMIN_MIN_LEVEL:
+        conn.close()
+        return {"ok": False, "error": "Нет прав"}
+    c.execute("""
+        UPDATE complaints SET status = %s, updated_at = CURRENT_TIMESTAMP WHERE id = %s
+    """, (new_status, complaint_id))
     conn.commit()
     conn.close()
     return {"ok": True}
