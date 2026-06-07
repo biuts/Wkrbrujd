@@ -388,8 +388,13 @@ async def api_get_complaint(request):
 async def api_roles(request):
     return json_response(ROLE_NAMES)
 
+async def api_index(request):
+    return web.FileResponse("index.html")
+
 def create_app():
     app = web.Application()
+    app.router.add_get("/", api_index)
+    app.router.add_get("/favicon.ico", lambda r: web.Response(status=204))
     app.router.add_get("/api/me", api_me)
     app.router.add_get("/api/users", api_users)
     app.router.add_post("/api/set-role", api_set_role)
