@@ -5,8 +5,6 @@ import json
 import logging
 import os
 import urllib.parse
-from aiohttp import web
-from aiohttp.web import middleware
 from aiogram import Bot, Dispatcher, types, F
 from aiogram.filters import Command
 from aiogram.types import WebAppInfo, InlineKeyboardMarkup, InlineKeyboardButton
@@ -392,7 +390,7 @@ async def api_roles(request):
 async def api_index(request):
     return web.FileResponse("index.html")
 
-@middleware
+@web.middleware
 async def cors_middleware(request, handler):
     if request.method == "OPTIONS":
         return web.Response(headers={
