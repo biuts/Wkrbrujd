@@ -266,7 +266,7 @@ def json_response(data, status=200):
         status=status
     )
 
-async def auth_middleware(request: web.Request):
+async def auth_middleware(request):
     init_data = request.headers.get("X-Init-Data", "")
     if not init_data:
         return None
