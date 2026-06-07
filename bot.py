@@ -5,7 +5,7 @@ import json
 import logging
 import os
 import urllib.parse
-from aiohttp import web
+from aiohttp import web, middleware
 from aiogram import Bot, Dispatcher, types, F
 from aiogram.filters import Command
 from aiogram.types import WebAppInfo, InlineKeyboardMarkup, InlineKeyboardButton
