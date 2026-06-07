@@ -241,7 +241,7 @@ def get_user_complaints(reporter_id: int):
     return [dict(r) for r in rows]
 
 
-def respond_complaint(admin_id: int, complaint_id: int, response: str, close: bool = True) -> dict:
+def respond_complaint(admin_id: int, complaint_id: int, response: str, close: bool = True, status: str = "closed") -> dict:
     conn = get_conn()
     c = conn.cursor()
     c.execute("SELECT * FROM users WHERE telegram_id = %s", (admin_id,))
@@ -254,7 +254,7 @@ def respond_complaint(admin_id: int, complaint_id: int, response: str, close: bo
         conn.close()
         return {"ok": False, "error": "Недостаточно прав"}
 
-    status = "closed" if close else "open"
+    status = status if status else ("closed" if close else "open")
     c.execute("""
         UPDATE complaints
         SET admin_response = %s, responded_by = %s, status = %s, updated_at = CURRENT_TIMESTAMP
