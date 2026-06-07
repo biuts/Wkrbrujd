@@ -185,7 +185,7 @@ async def api_respond_complaint(request: web.Request):
     close = body.get("close", True)
     if not complaint_id or not response_text:
         return json_response({"error": "Неверные параметры"}, 400)
-    result = respond_complaint(user["telegram_id"], complaint_id, response_text, close)
+    result = respond_complaint(user["telegram_id"], complaint_id, response_text, close, status)
     return json_response(result)
 
 
