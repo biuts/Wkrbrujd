@@ -391,7 +391,7 @@ async def api_index(request):
     return web.FileResponse("index.html")
 
 @web.middleware
-async def cors_middleware(request, handler):
+async def auth_middleware(request):
     if request.method == "OPTIONS":
         return web.Response(headers={
             "Access-Control-Allow-Origin": "*",
