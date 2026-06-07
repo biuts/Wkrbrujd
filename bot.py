@@ -391,8 +391,22 @@ async def api_roles(request):
 async def api_index(request):
     return web.FileResponse("index.html")
 
+@middleware
+async def cors_middleware(request, handler):
+    if request.method == "OPTIONS":
+        return web.Response(headers={
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+            "Access-Control-Allow-Headers": "Content-Type, X-Init-Data",
+        })
+    response = await handler(request)
+    response.headers["Access-Control-Allow-Origin"] = "*"
+    response.headers["Access-Control-Allow-Headers"] = "Content-Type, X-Init-Data"
+    return response
+
 def create_app():
-    app = web.Application()
+    app = web.Application(middlewares=[cors_middleware])
+    app.router.add_route("OPTIONS", "/{path_info:.*}", lambda r: web.Response())
     app.router.add_get("/", api_index)
     app.router.add_get("/favicon.ico", lambda r: web.Response(status=204))
     app.router.add_get("/api/me", api_me)
