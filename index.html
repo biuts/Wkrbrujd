@@ -312,8 +312,6 @@ body {
 }
 .status-open { background: rgba(39,174,96,.15); color: var(--success); border: 1px solid rgba(39,174,96,.3); }
 .status-closed { background: rgba(231,76,60,.15); color: #e74c3c; border: 1px solid rgba(231,76,60,.3); }
-.status-review { background: rgba(243,156,18,.15); color: #f39c12; border: 1px solid rgba(243,156,18,.3); }
-.status-approved { background: rgba(52,152,219,.15); color: var(--accent); border: 1px solid rgba(52,152,219,.3); }
 .complaint-meta {
   display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 6px;
 }
@@ -563,7 +561,7 @@ body {
           <div class="home-action-icon">💡</div>
           <div class="home-action-label">Предложить идею</div>
         </div>
-        <div class="home-action admin-btn" onclick="showScreen('admin-complaints')" style="display:none">
+        <div class="home-action admin-btn" onclick="showScreen('admin-users')" style="display:none">
           <div class="home-action-icon">⚙</div>
           <div class="home-action-label">Панель администратора</div>
         </div>
@@ -681,24 +679,12 @@ body {
     <div id="modal-body"></div>
     <div id="respond-area" style="display:none">
       <div class="form-group">
-        <label class="form-label">Шаблоны ответов</label>
-        <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px">
-          <button class="btn btn-ghost" style="font-size:11px;padding:6px 10px" onclick="applyTemplate('reject1')">❌ Отклонить: нет нарушений</button>
-          <button class="btn btn-ghost" style="font-size:11px;padding:6px 10px" onclick="applyTemplate('reject2')">❌ Отклонить: нет доказательств</button>
-          <button class="btn btn-ghost" style="font-size:11px;padding:6px 10px" onclick="applyTemplate('approve1')">✅ Одобрить: беседа</button>
-          <button class="btn btn-ghost" style="font-size:11px;padding:6px 10px" onclick="applyTemplate('approve2')">✅ Одобрить: исключение</button>
-          <button class="btn btn-ghost" style="font-size:11px;padding:6px 10px" onclick="applyTemplate('approve3')">✅ Одобрить: наказание</button>
-          <button class="btn btn-ghost" style="font-size:11px;padding:6px 10px" onclick="applyTemplate('review')">🔍 На рассмотрении</button>
-        </div>
         <label class="form-label">Ответ администратора</label>
-        <textarea class="form-textarea" id="respond-text" placeholder="Введите ответ или выберите шаблон..."></textarea>
+        <textarea class="form-textarea" id="respond-text" placeholder="Введите ответ..."></textarea>
       </div>
-      <div style="display:flex;flex-direction:column;gap:8px">
-        <div style="display:flex;gap:8px">
-          <button class="btn btn-success" onclick="sendResponse('approved')" style="flex:1">✅ Одобрить и закрыть</button>
-          <button class="btn btn-danger" onclick="sendResponse('closed')" style="flex:1">❌ Отклонить и закрыть</button>
-        </div>
-        <button class="btn btn-ghost" onclick="sendResponse('review')" style="width:100%">🔍 Отправить на рассмотрение</button>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-success" onclick="sendResponse(true)" style="flex:1">✅ Ответить и закрыть</button>
+        <button class="btn btn-ghost" onclick="sendResponse(false)" style="flex:0.5">Ответить</button>
       </div>
     </div>
     <button class="btn btn-ghost" style="margin-top:12px" onclick="closeModal()">Закрыть</button>
@@ -892,9 +878,8 @@ function renderMyComplaintCard(c) {
   const typeName = TYPE_NAMES[c.type] || c.type;
   const statusHtml = c.status === 'open'
     ? '<span class="status-badge status-open">Открыта</span>'
-    : c.status === 'approved' ? '<span class="status-badge status-approved">Одобрена</span>'
-    : c.status === 'review' ? '<span class="status-badge status-review">На рассмотрении</span>'
     : '<span class="status-badge status-closed">Закрыта</span>';
+  const responderHtml = c.admin_response
     ? `<div class="responder-info">✅ Ответил: ${c.responder_name || 'Администратор'}${c.responder_role_name ? ' · <span style="color:var(--text3)">' + c.responder_role_name + '</span>' : ''}</div>`
     : '';
   return `
@@ -979,8 +964,6 @@ function renderAdminComplaintCard(c) {
   const typeName = TYPE_NAMES[c.type] || c.type;
   const statusHtml = c.status === 'open'
     ? '<span class="status-badge status-open">Открыта</span>'
-    : c.status === 'approved' ? '<span class="status-badge status-approved">Одобрена</span>'
-    : c.status === 'review' ? '<span class="status-badge status-review">На рассмотрении</span>'
     : '<span class="status-badge status-closed">Закрыта</span>';
   const responderHtml = c.responder_name
     ? `<div class="responder-info">✅ ${c.responder_name} · <span style="color:var(--text3)">${c.responder_role_name || ''}</span></div>`
@@ -1049,39 +1032,19 @@ async function openAdminComplaint(id) {
   document.getElementById('complaint-modal').classList.add('open');
 }
 
-async function sendResponse(action) {
+async function sendResponse(close) {
   const text = document.getElementById('respond-text').value.trim();
   if (!text) { showToast('Введите ответ', 'error'); return; }
-  
-  let close = action !== 'review';
-  let status = action; // 'approved', 'closed', 'review'
-  
   const res = await api('POST', '/api/complaint/respond', {
-    complaint_id: currentComplaintId, response: text, close, status
+    complaint_id: currentComplaintId, response: text, close
   });
   if (res.ok) {
-    const msg = action === 'approved' ? '✅ Жалоба одобрена и закрыта' 
-              : action === 'closed' ? '❌ Жалоба отклонена и закрыта'
-              : '🔍 Жалоба отправлена на рассмотрение';
-    showToast(msg, 'success');
+    showToast(close ? '✅ Ответ отправлен, жалоба закрыта' : '✅ Ответ отправлен', 'success');
     closeModal();
     loadAdminComplaints();
   } else {
     showToast(res.error || 'Ошибка', 'error');
   }
-}
-
-const TEMPLATES = {
-  reject1: `Здравствуйте уважаемый пользователь.\nВаша жалоба получает статус : Закрыто.\nИгрок не совершал запрещённых действий, нарушений правил не выявлено.`,
-  reject2: `Здравствуйте уважаемый пользователь.\nВаша жалоба получает статус : Закрыто.\nНедостаточно доказательств.`,
-  approve1: `Здравствуйте уважаемый пользователь.\nВаша жалоба получает статус : Одобрено.\nС игроком будет проведена воспитательная беседа.`,
-  approve2: `Здравствуйте уважаемый пользователь.\nВаша жалоба получает статус : Одобрено.\nИгрок будет исключен из семьи.`,
-  approve3: `Здравствуйте уважаемый пользователь.\nВаша жалоба получает статус : Одобрено.\nИгрок получит соответствующее наказание.`,
-  review: `Здравствуйте уважаемый пользователь.\nВаша жалоба получает статус : На рассмотрении.\nМы сделаем проверку данного игрока.`,
-};
-
-function applyTemplate(key) {
-  document.getElementById('respond-text').value = TEMPLATES[key] || '';
 }
 
 function closeModal() {
