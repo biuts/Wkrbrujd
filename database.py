@@ -281,3 +281,16 @@ def get_complaint(complaint_id: int):
     conn.close()
     return dict(row) if row else None
     
+
+def set_complaint_status(admin_id: int, complaint_id: int, new_status: str) -> dict:
+    conn = get_conn()
+    c = conn.cursor()
+    c.execute("SELECT * FROM users WHERE telegram_id = %s", (admin_id,))
+    admin = c.fetchone()
+    if not admin or ROLES.get(admin["role"], 0) < ADMIN_MIN_LEVEL:
+        conn.close()
+        return {"ok": False, "error": "Нет прав"}
+    c.execute("UPDATE complaints SET status = %s, updated_at = CURRENT_TIMESTAMP WHERE id = %s", (new_status, complaint_id))
+    conn.commit()
+    conn.close()
+    return {"ok": True}
