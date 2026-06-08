@@ -294,3 +294,13 @@ def set_complaint_status(admin_id: int, complaint_id: int, new_status: str) -> d
     conn.commit()
     conn.close()
     return {"ok": True}
+
+def get_admins():
+    conn = get_conn()
+    c = conn.cursor()
+    admin_roles = [role for role, level in ROLES.items() if level >= ADMIN_MIN_LEVEL]
+    placeholders = ",".join(["%s"] * len(admin_roles))
+    c.execute(f"SELECT * FROM users WHERE role IN ({placeholders}) AND is_blocked = 0", admin_roles)
+    rows = c.fetchall()
+    conn.close()
+    return [dict(r) for r in rows]
