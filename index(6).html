@@ -1,0 +1,1581 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>FROSTBANE UNION</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Exo+2:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+:root {
+  --bg: #0a0c12;
+  --bg2: #0f1219;
+  --card: #141820;
+  --card2: #1a2030;
+  --border: #1e2535;
+  --border2: #252d40;
+  --accent: #3b6fd4;
+  --accent2: #2a5bbf;
+  --danger: #c0392b;
+  --danger2: #992d22;
+  --success: #27ae60;
+  --warn: #e67e22;
+  --text: #e8eaf0;
+  --text2: #8892a4;
+  --text3: #5a6478;
+  --owner: #f39c12;
+  --main-admin: #9b59b6;
+  --senior-admin: #3498db;
+  --admin: #2ecc71;
+  --junior-admin: #1abc9c;
+  --user: #7f8c8d;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+body {
+  font-family: 'Exo 2', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ── LOADING ── */
+#loading {
+  position: fixed; inset: 0;
+  background: var(--bg);
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  z-index: 9999;
+  gap: 16px;
+}
+.loader-logo {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 28px; font-weight: 700;
+  color: var(--accent);
+  letter-spacing: 3px;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+.loader-bar {
+  width: 160px; height: 3px;
+  background: var(--border2);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.loader-bar-fill {
+  height: 100%; width: 0%;
+  background: var(--accent);
+  border-radius: 2px;
+  animation: load 1.5s ease-in-out forwards;
+}
+@keyframes load { to { width: 100%; } }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.5} }
+
+/* ── BLOCKED ── */
+#blocked-screen {
+  display: none; position: fixed; inset: 0;
+  background: var(--bg);
+  align-items: center; justify-content: center;
+  flex-direction: column; gap: 16px;
+  text-align: center; padding: 32px;
+}
+#blocked-screen .block-icon { font-size: 64px; }
+#blocked-screen h2 { font-family: 'Rajdhani', sans-serif; font-size: 24px; color: var(--danger); }
+#blocked-screen p { color: var(--text2); font-size: 14px; }
+
+/* ── APP ── */
+#app { display: none; flex-direction: column; min-height: 100vh; }
+
+/* ── HEADER ── */
+.header {
+  background: var(--bg2);
+  border-bottom: 1px solid var(--border);
+  padding: 14px 16px 10px;
+  position: sticky; top: 0; z-index: 100;
+}
+.header-top {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 4px;
+}
+.header-logo {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 20px; font-weight: 700;
+  color: var(--text); letter-spacing: 1px;
+}
+.header-logo span { color: var(--accent); }
+.header-user {
+  display: flex; align-items: center; gap: 8px;
+}
+.header-avatar {
+  width: 30px; height: 30px; border-radius: 50%;
+  background: var(--accent);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px; font-weight: 700;
+  font-family: 'Rajdhani', sans-serif;
+  color: #fff;
+}
+.header-name {
+  font-size: 13px; font-weight: 600; color: var(--text);
+}
+.role-badge {
+  display: inline-block;
+  font-size: 10px; font-weight: 600;
+  padding: 2px 7px; border-radius: 10px;
+  letter-spacing: 0.5px;
+  font-family: 'Rajdhani', sans-serif;
+}
+.role-owner    { background: rgba(243,156,18,.15); color: var(--owner); border: 1px solid rgba(243,156,18,.3); }
+.role-main_admin { background: rgba(155,89,182,.15); color: var(--main-admin); border: 1px solid rgba(155,89,182,.3); }
+.role-senior_admin { background: rgba(52,152,219,.15); color: var(--senior-admin); border: 1px solid rgba(52,152,219,.3); }
+.role-admin    { background: rgba(46,204,113,.15); color: var(--admin); border: 1px solid rgba(46,204,113,.3); }
+.role-junior_admin { background: rgba(26,188,156,.15); color: var(--junior-admin); border: 1px solid rgba(26,188,156,.3); }
+.role-user     { background: rgba(127,140,141,.15); color: var(--user); border: 1px solid rgba(127,140,141,.3); }
+
+/* ── NAV ── */
+.nav {
+  display: flex; background: var(--bg2);
+  border-bottom: 1px solid var(--border);
+  overflow-x: auto; scrollbar-width: none;
+}
+.nav::-webkit-scrollbar { display: none; }
+.nav-btn {
+  flex-shrink: 0;
+  padding: 10px 16px;
+  background: none; border: none; border-bottom: 2px solid transparent;
+  color: var(--text2); font-family: 'Exo 2', sans-serif;
+  font-size: 13px; font-weight: 500;
+  cursor: pointer; transition: all .2s;
+  white-space: nowrap;
+}
+.nav-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+.nav-btn:hover { color: var(--text); }
+
+/* ── CONTENT ── */
+.content { flex: 1; padding: 16px; }
+.screen { display: none; animation: fadeIn .25s ease; }
+.screen.active { display: block; }
+@keyframes fadeIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+
+/* ── CARDS ── */
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 12px;
+}
+.card-title {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 16px; font-weight: 700;
+  color: var(--text); margin-bottom: 12px;
+  display: flex; align-items: center; gap: 8px;
+}
+
+/* ── HOME SCREEN ── */
+.home-hero {
+  background: linear-gradient(135deg, #0f1a35 0%, #0a1428 50%, #0d1020 100%);
+  border: 1px solid var(--border2);
+  border-radius: 16px;
+  padding: 28px 20px;
+  text-align: center;
+  margin-bottom: 16px;
+  position: relative;
+  overflow: hidden;
+}
+.home-hero::before {
+  content: '';
+  position: absolute; top: -40px; right: -40px;
+  width: 120px; height: 120px;
+  background: radial-gradient(circle, rgba(59,111,212,.3) 0%, transparent 70%);
+  border-radius: 50%;
+}
+.home-hero-icon { font-size: 48px; margin-bottom: 12px; }
+.home-hero-title {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 24px; font-weight: 700;
+  color: var(--text); margin-bottom: 6px;
+}
+.home-hero-sub { font-size: 13px; color: var(--text2); line-height: 1.5; }
+
+.home-grid {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 10px; margin-bottom: 12px;
+}
+.home-action {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 18px 14px;
+  display: flex; flex-direction: column;
+  align-items: center; gap: 10px;
+  cursor: pointer;
+  transition: all .2s;
+  text-align: center;
+}
+.home-action:hover, .home-action:active {
+  background: var(--card2);
+  border-color: var(--accent);
+  transform: translateY(-2px);
+}
+.home-action-icon { font-size: 28px; }
+.home-action-label {
+  font-size: 12px; font-weight: 600;
+  color: var(--text2);
+  font-family: 'Rajdhani', sans-serif;
+  letter-spacing: .5px;
+}
+.home-action.admin-btn {
+  grid-column: 1 / -1;
+  flex-direction: row; justify-content: center;
+  padding: 14px;
+  background: rgba(59,111,212,.1);
+  border-color: rgba(59,111,212,.4);
+}
+.home-action.admin-btn .home-action-label { color: var(--accent); font-size: 14px; }
+
+/* ── FORM ── */
+.form-group { margin-bottom: 14px; }
+.form-label {
+  display: block; font-size: 12px; font-weight: 600;
+  color: var(--text2); margin-bottom: 6px;
+  letter-spacing: .5px; text-transform: uppercase;
+}
+.form-label .req { color: var(--danger); }
+.form-input, .form-textarea, .form-select {
+  width: 100%; padding: 11px 14px;
+  background: var(--bg);
+  border: 1px solid var(--border2);
+  border-radius: 8px;
+  color: var(--text); font-family: 'Exo 2', sans-serif;
+  font-size: 14px;
+  transition: border-color .2s;
+  outline: none;
+}
+.form-input:focus, .form-textarea:focus, .form-select:focus {
+  border-color: var(--accent);
+}
+.form-textarea { resize: vertical; min-height: 90px; }
+.form-select { appearance: none; cursor: pointer; }
+.form-hint { font-size: 11px; color: var(--text3); margin-top: 4px; }
+
+/* ── BUTTONS ── */
+.btn {
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  width: 100%; padding: 13px;
+  border: none; border-radius: 10px;
+  font-family: 'Exo 2', sans-serif; font-size: 15px; font-weight: 600;
+  cursor: pointer; transition: all .2s;
+  outline: none;
+}
+.btn-primary { background: var(--accent); color: #fff; }
+.btn-primary:hover { background: var(--accent2); }
+.btn-danger { background: var(--danger); color: #fff; }
+.btn-danger:hover { background: var(--danger2); }
+.btn-ghost {
+  background: transparent; color: var(--text2);
+  border: 1px solid var(--border2);
+}
+.btn-ghost:hover { background: var(--card2); color: var(--text); }
+.btn-success { background: var(--success); color: #fff; }
+.btn:disabled { opacity: .5; cursor: not-allowed; }
+.btn-sm {
+  padding: 7px 14px; font-size: 13px;
+  width: auto; border-radius: 8px;
+}
+
+/* ── COMPLAINT CARD ── */
+.complaint-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 14px;
+  margin-bottom: 10px;
+  cursor: pointer;
+  transition: all .2s;
+}
+.complaint-card:hover { border-color: var(--border2); background: var(--card2); }
+.complaint-card-header {
+  display: flex; align-items: flex-start;
+  justify-content: space-between; margin-bottom: 8px;
+}
+.complaint-violator {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 17px; font-weight: 700; color: var(--text);
+}
+.status-badge {
+  font-size: 11px; font-weight: 600;
+  padding: 3px 9px; border-radius: 20px;
+  font-family: 'Rajdhani', sans-serif; letter-spacing: .3px;
+  white-space: nowrap;
+}
+.status-open { background: rgba(39,174,96,.15); color: var(--success); border: 1px solid rgba(39,174,96,.3); }
+.status-closed { background: rgba(231,76,60,.15); color: #e74c3c; border: 1px solid rgba(231,76,60,.3); }
+.status-reviewing { background: rgba(52,152,219,.15); color: #3498db; border: 1px solid rgba(52,152,219,.3); }
+.status-approved { background: rgba(39,174,96,.15); color: var(--success); border: 1px solid rgba(39,174,96,.3); }
+.complaint-meta {
+  display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 6px;
+}
+.type-badge {
+  font-size: 11px; font-weight: 600;
+  padding: 2px 8px; border-radius: 20px;
+  background: rgba(59,111,212,.15); color: var(--accent);
+  border: 1px solid rgba(59,111,212,.3);
+}
+.complaint-desc {
+  font-size: 13px; color: var(--text2);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.complaint-footer {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-top: 8px;
+}
+.complaint-from { font-size: 11px; color: var(--text3); }
+.complaint-time { font-size: 11px; color: var(--text3); }
+.responder-info {
+  display: flex; align-items: center; gap: 5px;
+  font-size: 11px; color: var(--success); margin-top: 6px;
+}
+
+/* ── USER CARD ── */
+.user-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 14px;
+  margin-bottom: 10px;
+}
+.user-card-header {
+  display: flex; align-items: center; gap: 12px; margin-bottom: 12px;
+}
+.user-avatar {
+  width: 42px; height: 42px; border-radius: 50%;
+  background: var(--card2);
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Rajdhani', sans-serif; font-size: 16px; font-weight: 700;
+  flex-shrink: 0;
+}
+.user-info-name {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 16px; font-weight: 700; color: var(--text);
+}
+.user-info-un { font-size: 12px; color: var(--text2); margin-top: 1px; }
+.user-info-id { font-size: 11px; color: var(--text3); }
+.user-blocked-label {
+  font-size: 11px; color: var(--danger); margin-top: 3px;
+  display: flex; align-items: center; gap: 4px;
+}
+.user-actions {
+  display: flex; gap: 8px; flex-wrap: wrap;
+}
+.user-role-select {
+  flex: 1; min-width: 140px;
+  padding: 8px 10px;
+  background: var(--bg);
+  border: 1px solid var(--border2);
+  border-radius: 8px; color: var(--text);
+  font-family: 'Exo 2', sans-serif; font-size: 13px;
+  outline: none;
+}
+
+/* ── MODAL ── */
+.modal-overlay {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,.7); backdrop-filter: blur(4px);
+  z-index: 500;
+  align-items: flex-end;
+}
+.modal-overlay.open { display: flex; }
+.modal {
+  background: var(--card);
+  border: 1px solid var(--border2);
+  border-radius: 20px 20px 0 0;
+  padding: 20px 16px 32px;
+  width: 100%; max-height: 85vh;
+  overflow-y: auto;
+  animation: slideUp .3s ease;
+}
+@keyframes slideUp { from{transform:translateY(100%)} to{transform:translateY(0)} }
+.modal-handle {
+  width: 36px; height: 4px;
+  background: var(--border2); border-radius: 2px;
+  margin: 0 auto 20px;
+}
+.modal-title {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 20px; font-weight: 700;
+  color: var(--text); margin-bottom: 4px;
+}
+.modal-sub { font-size: 13px; color: var(--text2); margin-bottom: 20px; }
+.modal-field { margin-bottom: 14px; }
+.modal-field-label { font-size: 11px; color: var(--text3); margin-bottom: 3px; }
+.modal-field-value { font-size: 15px; color: var(--text); font-weight: 500; }
+.modal-response-box {
+  background: var(--bg);
+  border: 1px solid var(--border2);
+  border-radius: 8px; padding: 12px;
+  margin-bottom: 14px;
+}
+.modal-response-text { font-size: 14px; color: var(--text); }
+.modal-responder {
+  display: flex; align-items: center; gap: 6px;
+  margin-top: 8px; padding-top: 8px;
+  border-top: 1px solid var(--border);
+}
+
+/* ── FILTERS ── */
+.filters { display: flex; gap: 8px; margin-bottom: 14px; flex-wrap: wrap; }
+.filter-btn {
+  padding: 6px 14px;
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 20px; color: var(--text2);
+  font-family: 'Exo 2', sans-serif; font-size: 12px; font-weight: 500;
+  cursor: pointer; transition: all .2s;
+}
+.filter-btn.active {
+  background: rgba(59,111,212,.15);
+  border-color: var(--accent); color: var(--accent);
+}
+
+/* ── SEARCH ── */
+.search-box {
+  position: relative; margin-bottom: 14px;
+}
+.search-input {
+  width: 100%; padding: 10px 14px 10px 38px;
+  background: var(--bg);
+  border: 1px solid var(--border2);
+  border-radius: 10px; color: var(--text);
+  font-family: 'Exo 2', sans-serif; font-size: 14px;
+  outline: none; transition: border-color .2s;
+}
+.search-input:focus { border-color: var(--accent); }
+.search-icon {
+  position: absolute; left: 12px; top: 50%;
+  transform: translateY(-50%);
+  color: var(--text3); font-size: 16px;
+}
+
+/* ── EMPTY ── */
+.empty {
+  text-align: center; padding: 48px 24px;
+  color: var(--text3);
+}
+.empty-icon { font-size: 40px; margin-bottom: 12px; }
+.empty-text { font-size: 14px; }
+
+/* ── SECTION TITLE ── */
+.section-title {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 13px; font-weight: 600;
+  color: var(--text3); letter-spacing: 1px;
+  text-transform: uppercase;
+  margin-bottom: 10px; margin-top: 4px;
+}
+
+/* ── TOAST ── */
+.toast {
+  position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(80px);
+  background: var(--card2); border: 1px solid var(--border2);
+  border-radius: 10px; padding: 12px 20px;
+  font-size: 14px; font-weight: 500;
+  z-index: 9999;
+  transition: transform .3s ease;
+  white-space: nowrap; max-width: 90vw;
+}
+.toast.show { transform: translateX(-50%) translateY(0); }
+.toast.success { border-color: var(--success); color: var(--success); }
+.toast.error { border-color: var(--danger); color: var(--danger); }
+
+/* ── CHAT ── */
+.chat-screen {
+  display: flex; flex-direction: column;
+  height: calc(100vh - 120px); padding: 0 !important;
+}
+#chat-messages-wrap {
+  flex: 1; overflow-y: auto; padding: 12px 12px 4px;
+  display: flex; flex-direction: column;
+}
+#chat-messages { display: flex; flex-direction: column; gap: 4px; }
+
+.chat-msg {
+  display: flex; flex-direction: column;
+  max-width: 85%; padding: 8px 11px 6px;
+  border-radius: 12px; position: relative;
+  background: var(--card); border: 1px solid var(--border);
+  animation: msgIn .15s ease;
+}
+@keyframes msgIn { from { opacity:0; transform: translateY(6px); } to { opacity:1; transform:none; } }
+
+.chat-msg.own {
+  align-self: flex-end;
+  background: rgba(59,111,212,.18); border-color: rgba(59,111,212,.3);
+}
+.chat-msg.other { align-self: flex-start; }
+.chat-msg.deleted { opacity: .45; font-style: italic; }
+
+.chat-msg-header {
+  display: flex; align-items: center; gap: 6px; margin-bottom: 3px;
+}
+.chat-msg-name {
+  font-size: 12px; font-weight: 600; color: var(--accent);
+}
+.chat-msg-role {
+  font-size: 10px; padding: 1px 5px; border-radius: 4px;
+  font-weight: 600; letter-spacing: .3px;
+}
+.role-owner     { background: rgba(243,156,18,.15); color: var(--owner); }
+.role-main_admin{ background: rgba(155,89,182,.15); color: var(--main-admin); }
+.role-senior_admin{ background: rgba(52,152,219,.15); color: var(--senior-admin); }
+.role-admin     { background: rgba(46,204,113,.15); color: var(--admin); }
+.role-junior_admin{ background: rgba(26,188,156,.15); color: var(--junior-admin); }
+
+.chat-msg-text { font-size: 14px; line-height: 1.45; word-break: break-word; }
+.chat-msg-time {
+  font-size: 10px; color: var(--text3);
+  text-align: right; margin-top: 3px;
+}
+
+.chat-reply-preview {
+  border-left: 3px solid var(--accent);
+  padding: 3px 8px; margin-bottom: 5px;
+  border-radius: 0 6px 6px 0;
+  background: rgba(59,111,212,.08);
+  font-size: 11px; color: var(--text2);
+}
+.chat-reply-preview b { color: var(--accent); }
+
+.chat-msg-actions {
+  position: absolute; right: 6px; top: 6px;
+  display: none; gap: 4px;
+}
+.chat-msg:hover .chat-msg-actions { display: flex; }
+.chat-msg-action-btn {
+  background: var(--card2); border: 1px solid var(--border2);
+  border-radius: 5px; padding: 2px 6px;
+  font-size: 11px; color: var(--text2); cursor: pointer;
+}
+.chat-msg-action-btn:hover { color: var(--text); }
+
+/* reply bar */
+#chat-reply-bar {
+  display: flex; align-items: center; gap: 8px;
+  padding: 8px 12px; background: var(--card);
+  border-top: 1px solid var(--border);
+  font-size: 12px; color: var(--text2);
+}
+#chat-reply-bar button {
+  background: none; border: none; color: var(--text3);
+  font-size: 16px; cursor: pointer; padding: 2px 6px;
+}
+#chat-reply-content { flex: 1; }
+#chat-reply-content b { color: var(--accent); }
+
+/* input bar */
+#chat-input-bar {
+  display: flex; align-items: flex-end; gap: 8px;
+  padding: 8px 12px 12px;
+  border-top: 1px solid var(--border);
+  background: var(--bg2);
+}
+#chat-input {
+  flex: 1; background: var(--card); border: 1px solid var(--border2);
+  border-radius: 20px; padding: 8px 14px;
+  color: var(--text); font-family: 'Exo 2', sans-serif; font-size: 14px;
+  resize: none; max-height: 120px; overflow-y: auto; line-height: 1.4;
+}
+#chat-input:focus { outline: none; border-color: var(--accent); }
+#chat-send-btn {
+  width: 40px; height: 40px; border-radius: 50%;
+  background: var(--accent); border: none; color: white;
+  font-size: 16px; cursor: pointer; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  transition: background .2s;
+}
+#chat-send-btn:hover { background: var(--accent2); }
+
+.chat-date-divider {
+  text-align: center; font-size: 11px; color: var(--text3);
+  margin: 8px 0; position: relative;
+}
+.chat-date-divider::before, .chat-date-divider::after {
+  content: ''; position: absolute; top: 50%;
+  width: 30%; height: 1px; background: var(--border);
+}
+.chat-date-divider::before { left: 0; }
+.chat-date-divider::after { right: 0; }
+
+#respond-area {
+  margin-top: 16px; border-top: 1px solid var(--border);
+  padding-top: 16px;
+}
+
+/* ── TEMPLATE BUTTONS ── */
+.tpl-btn {
+  display: flex; align-items: center;
+  width: 100%; padding: 11px 14px;
+  background: var(--bg); border: 1px solid var(--border2);
+  border-radius: 8px; color: var(--text);
+  font-family: 'Exo 2', sans-serif; font-size: 13px; font-weight: 500;
+  cursor: pointer; transition: all .2s;
+  text-align: left; gap: 8px; margin-bottom: 8px;
+}
+.tpl-btn:hover { background: var(--card2); border-color: var(--accent); }
+.tpl-btn.closed { border-color: rgba(231,76,60,.3); }
+.tpl-btn.closed:hover { border-color: #e74c3c; background: rgba(231,76,60,.07); }
+.tpl-btn.approved { border-color: rgba(39,174,96,.3); }
+.tpl-btn.approved:hover { border-color: var(--success); background: rgba(39,174,96,.07); }
+.tpl-section-label {
+  font-size: 11px; color: var(--text3); letter-spacing: .5px;
+  text-transform: uppercase; margin: 10px 0 6px;
+}
+</style>
+</head>
+<body>
+
+<!-- LOADING -->
+<div id="loading">
+  <div class="loader-logo">⚔ FROSTBANE</div>
+  <div class="loader-bar"><div class="loader-bar-fill"></div></div>
+</div>
+
+<!-- BLOCKED -->
+<div id="blocked-screen">
+  <div class="block-icon">🚫</div>
+  <h2>Доступ ограничен</h2>
+  <p>Ваш аккаунт заблокирован администрацией.<br>Обратитесь в поддержку если считаете это ошибкой.</p>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <!-- HEADER -->
+  <div class="header">
+    <div class="header-top">
+      <div class="header-logo">⚔ FROST<span>BANE</span></div>
+      <div class="header-user">
+        <div class="header-avatar" id="hdr-avatar">?</div>
+        <div>
+          <div class="header-name" id="hdr-name">...</div>
+          <div class="role-badge" id="hdr-role">...</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- NAV -->
+  <nav class="nav" id="main-nav">
+    <button class="nav-btn active" onclick="showScreen('home')">🏠 Главная</button>
+    <button class="nav-btn" onclick="showScreen('complaint-player')">👤 На игрока</button>
+    <button class="nav-btn" onclick="showScreen('complaint-admin')">🛡 На зама</button>
+    <button class="nav-btn" onclick="showScreen('my-complaints')">📋 Мои</button>
+    <button class="nav-btn admin-nav-btn" onclick="showScreen('admin-complaints')" style="display:none">⚙ Жалобы</button>
+    <button class="nav-btn admin-nav-btn" onclick="showScreen('admin-users')" style="display:none">👥 Панель</button>
+    <button class="nav-btn admin-nav-btn" id="nav-chat" onclick="openChat()" style="display:none">💬 Чат</button>
+  </nav>
+
+  <!-- SCREENS -->
+  <div class="content">
+
+    <!-- HOME -->
+    <div id="screen-home" class="screen active">
+      <div class="home-hero">
+        <div class="home-hero-icon">🛡</div>
+        <div class="home-hero-title">Система обращений</div>
+        <div class="home-hero-sub">Подавайте жалобы на нарушителей<br>и предлагайте улучшения</div>
+      </div>
+      <div class="home-grid">
+        <div class="home-action" onclick="showScreen('complaint-player')">
+          <div class="home-action-icon">👤</div>
+          <div class="home-action-label">Жалоба на игрока</div>
+        </div>
+        <div class="home-action" onclick="showScreen('complaint-admin')">
+          <div class="home-action-icon">🛡</div>
+          <div class="home-action-label">Жалоба на зама</div>
+        </div>
+        <div class="home-action" onclick="showScreen('my-complaints')">
+          <div class="home-action-icon">📋</div>
+          <div class="home-action-label">Мои обращения</div>
+        </div>
+        <div class="home-action" onclick="showScreen('suggest')">
+          <div class="home-action-icon">💡</div>
+          <div class="home-action-label">Предложить идею</div>
+        </div>
+        <div class="home-action admin-btn" onclick="showScreen('admin-users')" style="display:none">
+          <div class="home-action-icon">⚙</div>
+          <div class="home-action-label">Панель администратора</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- COMPLAINT: PLAYER -->
+    <div id="screen-complaint-player" class="screen">
+      <div class="card">
+        <div class="card-title">👤 Жалоба на игрока</div>
+        <div class="form-group">
+          <label class="form-label">Никнейм нарушителя <span class="req">*</span></label>
+          <input class="form-input" id="cp-username" placeholder="Например: Ivan_Ivanov">
+        </div>
+        <div class="form-group">
+          <label class="form-label">ID аккаунта <span style="color:var(--text3)">(необязательно)</span></label>
+          <input class="form-input" id="cp-id" type="number" placeholder="123456">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Описание нарушения <span class="req">*</span></label>
+          <textarea class="form-textarea" id="cp-desc" placeholder="Опишите ситуацию подробно..."></textarea>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Доказательства (ссылка)</label>
+          <input class="form-input" id="cp-evidence" placeholder="Ссылка на видео или скриншоты">
+          <div class="form-hint">Imgur, YouTube и др.</div>
+        </div>
+        <button class="btn btn-primary" onclick="submitComplaint('player')">📤 Отправить жалобу</button>
+      </div>
+    </div>
+
+    <!-- COMPLAINT: ADMIN -->
+    <div id="screen-complaint-admin" class="screen">
+      <div class="card">
+        <div class="card-title">🛡 Жалоба на администратора</div>
+        <div class="form-group">
+          <label class="form-label">Никнейм нарушителя <span class="req">*</span></label>
+          <input class="form-input" id="ca-username" placeholder="Например: Admin_Nick">
+        </div>
+        <div class="form-group">
+          <label class="form-label">ID аккаунта <span style="color:var(--text3)">(необязательно)</span></label>
+          <input class="form-input" id="ca-id" type="number" placeholder="123456">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Описание нарушения <span class="req">*</span></label>
+          <textarea class="form-textarea" id="ca-desc" placeholder="Опишите ситуацию подробно..."></textarea>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Доказательства (ссылка)</label>
+          <input class="form-input" id="ca-evidence" placeholder="Ссылка на видео или скриншоты">
+          <div class="form-hint">Imgur, YouTube и др.</div>
+        </div>
+        <button class="btn btn-primary" onclick="submitComplaint('admin')">📤 Отправить жалобу</button>
+      </div>
+    </div>
+
+    <!-- SUGGEST -->
+    <div id="screen-suggest" class="screen">
+      <div class="card">
+        <div class="card-title">💡 Предложить улучшение</div>
+        <div class="form-group">
+          <label class="form-label">Тема предложения <span class="req">*</span></label>
+          <input class="form-input" id="sg-title" placeholder="Например: Новый режим игры">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Описание <span class="req">*</span></label>
+          <textarea class="form-textarea" id="sg-desc" placeholder="Опишите вашу идею подробно..."></textarea>
+        </div>
+        <button class="btn btn-primary" onclick="submitSuggest()">💡 Отправить предложение</button>
+      </div>
+    </div>
+
+    <!-- MY COMPLAINTS -->
+    <div id="screen-my-complaints" class="screen">
+      <div class="section-title">Мои обращения</div>
+      <div id="my-complaints-list"><div class="empty"><div class="empty-icon">📋</div><div class="empty-text">Загрузка...</div></div></div>
+    </div>
+
+    <!-- ADMIN: COMPLAINTS -->
+    <div id="screen-admin-complaints" class="screen">
+      <div class="section-title">Жалобы</div>
+      <div class="filters" id="status-filters">
+        <button class="filter-btn active" onclick="setFilter('status','')">Все</button>
+        <button class="filter-btn" onclick="setFilter('status','open')">Открытые</button>
+        <button class="filter-btn" onclick="setFilter('status','closed')">Закрытые</button>
+      </div>
+      <div class="filters" id="type-filters">
+        <button class="filter-btn active" onclick="setFilter('type','')">Все типы</button>
+        <button class="filter-btn" onclick="setFilter('type','player')">На игрока</button>
+        <button class="filter-btn" onclick="setFilter('type','admin')">На зама</button>
+        <button class="filter-btn" onclick="setFilter('type','suggest')">Предложения</button>
+      </div>
+      <div id="admin-complaints-list"><div class="empty"><div class="empty-icon">📋</div><div class="empty-text">Загрузка...</div></div></div>
+    </div>
+
+    <!-- ADMIN: USERS -->
+    <div id="screen-admin-users" class="screen">
+      <div class="section-title">Пользователи и роли</div>
+      <div class="search-box">
+        <span class="search-icon">🔍</span>
+        <input class="search-input" id="users-search" placeholder="Поиск по нику или Telegram ID..." oninput="filterUsers()">
+      </div>
+      <div id="admin-users-list"><div class="empty"><div class="empty-icon">👥</div><div class="empty-text">Загрузка...</div></div></div>
+    </div>
+
+    <!-- ADMIN: CHAT -->
+    <div id="screen-chat" class="screen chat-screen">
+      <div id="chat-messages-wrap">
+        <div id="chat-messages"></div>
+      </div>
+      <div id="chat-reply-bar" style="display:none">
+        <div id="chat-reply-content"></div>
+        <button onclick="cancelReply()">✕</button>
+      </div>
+      <div id="chat-input-bar">
+        <textarea id="chat-input" placeholder="Сообщение..." rows="1" oninput="autoResize(this)" onkeydown="chatKeyDown(event)"></textarea>
+        <button id="chat-send-btn" onclick="sendChatMessage()">➤</button>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</div><!-- /app -->
+
+<!-- MODAL: Complaint Detail -->
+<div class="modal-overlay" id="complaint-modal">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="modal-title">Жалоба</div>
+    <div class="modal-sub" id="modal-sub"></div>
+    <div id="modal-body"></div>
+    <div id="respond-area" style="display:none">
+      <!-- Quick template buttons -->
+      <div id="template-section">
+        <div class="tpl-section-label">🔍 Статус</div>
+        <button class="tpl-btn" onclick="applyTemplate('reviewing')">🔍 На рассмотрении</button>
+        <div class="tpl-section-label">❌ Закрыть</div>
+        <button class="tpl-btn closed" onclick="applyTemplate('closed_1')">❌ Закрыто — нет нарушений</button>
+        <button class="tpl-btn closed" onclick="applyTemplate('closed_2')">❌ Закрыто — нет доказательств</button>
+        <div class="tpl-section-label">✅ Одобрить</div>
+        <button class="tpl-btn approved" onclick="applyTemplate('approved_1')">✅ Одобрено — беседа</button>
+        <button class="tpl-btn approved" onclick="applyTemplate('approved_2')">✅ Одобрено — исключение</button>
+        <button class="tpl-btn approved" onclick="applyTemplate('approved_3')">✅ Одобрено — наказание</button>
+        <div class="tpl-section-label">✏️ Свой ответ</div>
+      </div>
+      <div class="form-group">
+        <textarea class="form-textarea" id="respond-text" placeholder="Введите ответ..."></textarea>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px">
+        <button class="btn btn-ghost" id="btn-reviewing" onclick="quickReviewing()" style="flex:1;border-color:rgba(52,152,219,.4);color:#3498db">🔍 На рассмотрении</button>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn btn-success" id="btn-approve" onclick="sendResponse(true,'approved')" style="flex:1;display:none">✅ Одобрить</button>
+        <button class="btn btn-danger" id="btn-close" onclick="sendResponse(true,'closed')" style="flex:1;display:none">❌ Закрыть</button>
+        <button class="btn btn-primary" id="btn-respond-close" onclick="sendResponse(true,currentResponseStatus)" style="flex:1">✅ Ответить и закрыть</button>
+        <button class="btn btn-ghost" onclick="sendResponse(false,'open')" style="flex:0.5">Ответить</button>
+      </div>
+    </div>
+    <button class="btn btn-ghost" style="margin-top:12px" onclick="closeModal()">Закрыть</button>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+const tg = window.Telegram?.WebApp;
+if (tg) { tg.ready(); tg.expand(); }
+
+const API = '';  // пустая строка = текущий хост (бот сервит и HTML и API)
+let currentUser = null;
+let allUsers = [];
+let currentComplaintId = null;
+let currentResponseStatus = 'closed';
+let filters = { status: '', type: '' };
+const ROLE_NAMES = {
+  owner: 'Владелец',
+  main_admin: 'Главный администратор',
+  senior_admin: 'Старший администратор',
+  admin: 'Администратор',
+  junior_admin: 'Младший администратор',
+  user: 'Пользователь'
+};
+const ROLE_LEVELS = { owner:6, main_admin:5, senior_admin:4, admin:3, junior_admin:2, user:1 };
+const TYPE_NAMES = { player:'На игрока', admin:'На зама', suggest:'Предложение' };
+
+const TEMPLATES = {
+  reviewing: { label:'🔍 На рассмотрении', status:'reviewing', text:'Здравствуйте уважаемый пользователь.\nВаша жалоба получает статус: «На рассмотрении».\nМы сделаем проверку данного игрока.' },
+  closed_1:  { label:'❌ Закрыто — нет нарушений', status:'closed', text:'Здравствуйте уважаемый пользователь.\nВаша жалоба получает статус: «Закрыто».\nИгрок не совершал запрещённых действий, нарушений правил не выявлено.' },
+  closed_2:  { label:'❌ Закрыто — нет доказательств', status:'closed', text:'Здравствуйте уважаемый пользователь.\nВаша жалоба получает статус: «Закрыто».\nНедостаточно доказательств.' },
+  approved_1:{ label:'✅ Одобрено — беседа', status:'approved', text:'Здравствуйте уважаемый пользователь.\nВаша жалоба получает статус: «Одобрено».\nС игроком будет проведена воспитательная беседа.' },
+  approved_2:{ label:'✅ Одобрено — исключение', status:'approved', text:'Здравствуйте уважаемый пользователь.\nВаша жалоба получает статус: «Одобрено».\nИгрок будет исключен из семьи.' },
+  approved_3:{ label:'✅ Одобрено — наказание', status:'approved', text:'Здравствуйте уважаемый пользователь.\nВаша жалоба получает статус: «Одобрено».\nИгрок получит соответствующее наказание.' },
+};
+
+function getInitData() {
+  return tg?.initData || '';
+}
+
+async function api(method, path, body) {
+  const opts = {
+    method: method,
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Init-Data': getInitData()
+    }
+  };
+  if (body) opts.body = JSON.stringify(body);
+  const res = await fetch(API + path, opts);
+  return await res.json();
+}
+
+function showToast(msg, type='') {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = 'toast ' + type;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 2800);
+}
+
+// ── CHAT ────────────────────────────────────────────────
+let chatLastId = 0;
+let chatReplyTo = null;
+let chatPollTimer = null;
+let chatLoaded = false;
+
+const ROLE_NAMES_RU = {
+  owner: 'Владелец', main_admin: 'Гл. Администратор',
+  senior_admin: 'Ст. Администратор', admin: 'Администратор',
+  junior_admin: 'Мл. Администратор', user: 'Пользователь'
+};
+
+function formatChatTime(ts) {
+  const d = new Date(ts);
+  return d.toLocaleTimeString('ru-RU', { hour:'2-digit', minute:'2-digit' });
+}
+function formatChatDate(ts) {
+  const d = new Date(ts);
+  return d.toLocaleDateString('ru-RU', { day:'numeric', month:'long' });
+}
+
+function renderChatMsg(m, prevDate) {
+  if (m.is_deleted) {
+    return `<div class="chat-msg ${m.sender_id == currentUser.telegram_id ? 'own':'other'} deleted" id="cmsg-${m.id}">
+      <span class="chat-msg-text">🗑 Сообщение удалено</span>
+    </div>`;
+  }
+  const isOwn = m.sender_id == currentUser.telegram_id;
+  const roleClass = `role-${(m.role||'user').replace('_','-')}`;
+  const roleName = ROLE_NAMES_RU[m.role] || '';
+  const name = m.full_name || m.username || 'Неизвестно';
+  const canDelete = isOwn || (currentUser.role_level >= 4);
+
+  let replyHtml = '';
+  if (m.reply_to && m.reply_text) {
+    const rName = esc(m.reply_username || '');
+    const rText = esc((m.reply_text||'').substring(0, 80)) + (m.reply_text && m.reply_text.length > 80 ? '…' : '');
+    replyHtml = `<div class="chat-reply-preview"><b>↩ ${rName}</b><br>${rText}</div>`;
+  }
+
+  const actionsHtml = `<div class="chat-msg-actions">
+    <button class="chat-msg-action-btn" onclick="replyTo(${m.id},'${esc(m.username||name)}')">↩</button>
+    ${canDelete ? `<button class="chat-msg-action-btn" style="color:#e74c3c" onclick="deleteChatMsg(${m.id})">✕</button>` : ''}
+  </div>`;
+
+  const msgDate = formatChatDate(m.created_at);
+  const divider = prevDate !== msgDate
+    ? `<div class="chat-date-divider">${msgDate}</div>` : '';
+
+  return `${divider}<div class="chat-msg ${isOwn?'own':'other'}" id="cmsg-${m.id}">
+    ${actionsHtml}
+    <div class="chat-msg-header">
+      <span class="chat-msg-name">${esc(isOwn ? 'Вы' : name)}</span>
+      <span class="chat-msg-role ${roleClass}">${roleName}</span>
+    </div>
+    ${replyHtml}
+    <div class="chat-msg-text">${esc(m.text)}</div>
+    <div class="chat-msg-time">${formatChatTime(m.created_at)}</div>
+  </div>`;
+}
+
+async function openChat() {
+  showScreen('chat');
+  if (!chatLoaded) { await loadChatMessages(); chatLoaded = true; }
+  startChatPoll();
+}
+
+async function loadChatMessages() {
+  const res = await api('GET', '/api/chat');
+  if (!Array.isArray(res)) return;
+  const wrap = document.getElementById('chat-messages');
+  let prevDate = null;
+  wrap.innerHTML = res.map(m => {
+    const html = renderChatMsg(m, prevDate);
+    prevDate = formatChatDate(m.created_at);
+    return html;
+  }).join('');
+  if (res.length) chatLastId = res[res.length-1].id;
+  scrollChatBottom(false);
+}
+
+function startChatPoll() {
+  stopChatPoll();
+  chatPollTimer = setInterval(pollNewMessages, 3000);
+}
+function stopChatPoll() {
+  if (chatPollTimer) { clearInterval(chatPollTimer); chatPollTimer = null; }
+}
+
+async function pollNewMessages() {
+  if (!chatLastId && chatLastId !== 0) return;
+  const res = await api('GET', `/api/chat?after_id=${chatLastId}`);
+  if (!Array.isArray(res) || !res.length) return;
+  const wrap = document.getElementById('chat-messages');
+  const wrapEl = document.getElementById('chat-messages-wrap');
+  const atBottom = wrapEl.scrollHeight - wrapEl.scrollTop - wrapEl.clientHeight < 80;
+  let prevDate = null;
+  res.forEach(m => {
+    wrap.insertAdjacentHTML('beforeend', renderChatMsg(m, prevDate));
+    prevDate = formatChatDate(m.created_at);
+    chatLastId = Math.max(chatLastId, m.id);
+  });
+  if (atBottom) scrollChatBottom(true);
+}
+
+function scrollChatBottom(smooth) {
+  const wrap = document.getElementById('chat-messages-wrap');
+  if (wrap) wrap.scrollTo({ top: wrap.scrollHeight, behavior: smooth ? 'smooth' : 'instant' });
+}
+
+async function sendChatMessage() {
+  const input = document.getElementById('chat-input');
+  const text = input.value.trim();
+  if (!text) return;
+  input.value = ''; input.style.height = '';
+  const body = { text };
+  if (chatReplyTo) { body.reply_to = chatReplyTo; cancelReply(); }
+  const res = await api('POST', '/api/chat', body);
+  if (res.ok) { await pollNewMessages(); scrollChatBottom(true); }
+  else showToast(res.error || 'Ошибка', 'error');
+}
+
+function replyTo(id, username) {
+  chatReplyTo = id;
+  const msgEl = document.querySelector(`#cmsg-${id} .chat-msg-text`);
+  const text = msgEl ? msgEl.textContent.substring(0, 60) : '';
+  document.getElementById('chat-reply-bar').style.display = 'flex';
+  document.getElementById('chat-reply-content').innerHTML = `<b>↩ ${esc(username)}</b> ${esc(text)}`;
+  document.getElementById('chat-input').focus();
+}
+function cancelReply() {
+  chatReplyTo = null;
+  document.getElementById('chat-reply-bar').style.display = 'none';
+}
+
+async function deleteChatMsg(id) {
+  const res = await api('DELETE', `/api/chat/${id}`);
+  if (res.ok) {
+    const el = document.getElementById(`cmsg-${id}`);
+    if (el) el.outerHTML = `<div class="chat-msg deleted" id="cmsg-${id}"><span class="chat-msg-text">🗑 Сообщение удалено</span></div>`;
+  } else showToast(res.error || 'Ошибка', 'error');
+}
+
+function chatKeyDown(e) {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendChatMessage(); }
+}
+function autoResize(el) {
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 120) + 'px';
+}
+
+// ── INIT ─────────────────────────────────────────────────
+async function init() {
+  try {
+    const me = await api('GET', '/api/me');
+    if (me.error === 'Заблокирован') {
+      document.getElementById('loading').style.display = 'none';
+      const bs = document.getElementById('blocked-screen');
+      bs.style.display = 'flex';
+      return;
+    }
+    if (me.error) {
+      showToast('Ошибка авторизации', 'error');
+      document.getElementById('loading').style.display = 'none';
+      return;
+    }
+    currentUser = me;
+    renderHeader();
+    if (me.role_level >= 2) showAdminElements();
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('app').style.display = 'flex';
+    document.getElementById('app').style.flexDirection = 'column';
+
+    // Открыть жалобу — читаем из start_param (t.me ссылка) или URL ?complaint= (web_app кнопка)
+    const startParam = tg?.initDataUnsafe?.start_param || '';
+    const urlParam = new URLSearchParams(window.location.search).get('complaint');
+    let targetComplaintId = null;
+    if (startParam.startsWith('complaint_')) {
+      targetComplaintId = parseInt(startParam.replace('complaint_', ''));
+    } else if (urlParam) {
+      targetComplaintId = parseInt(urlParam);
+    }
+    if (targetComplaintId && !isNaN(targetComplaintId)) {
+      if (me.role_level >= 2) {
+        showScreen('screen-admin-complaints');
+        setActiveTab('tab-complaints');
+        await loadAdminComplaints();
+        openAdminComplaint(targetComplaintId);
+      } else {
+        showScreen('screen-my-complaints');
+        setActiveTab('tab-my');
+        await loadMyComplaints();
+        openMyComplaint(targetComplaintId);
+      }
+    }
+  } catch(e) {
+    console.error(e);
+    // Dev mode fallback
+    currentUser = { telegram_id: 0, full_name: 'Dev User', username: 'dev', role: 'owner', role_level: 6, role_name: 'Владелец' };
+    renderHeader();
+    showAdminElements();
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('app').style.display = 'flex';
+    document.getElementById('app').style.flexDirection = 'column';
+  }
+}
+
+function renderHeader() {
+  const u = currentUser;
+  const initials = (u.full_name || u.username || '?').slice(0, 2).toUpperCase();
+  document.getElementById('hdr-avatar').textContent = initials;
+  document.getElementById('hdr-name').textContent = u.full_name || ('@' + u.username);
+  const roleEl = document.getElementById('hdr-role');
+  roleEl.textContent = u.role_name || ROLE_NAMES[u.role] || 'Пользователь';
+  roleEl.className = 'role-badge role-' + u.role;
+}
+
+function showAdminElements() {
+  document.querySelectorAll('.admin-nav-btn, .admin-btn').forEach(el => el.style.display = '');
+}
+
+function showScreen(name) {
+  if (name !== 'chat') stopChatPoll();
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  const screen = document.getElementById('screen-' + name);
+  if (screen) screen.classList.add('active');
+  document.querySelectorAll('.nav-btn').forEach(b => {
+    if (b.getAttribute('onclick')?.includes(name)) b.classList.add('active');
+  });
+  if (name === 'my-complaints') loadMyComplaints();
+  if (name === 'admin-complaints') loadAdminComplaints();
+  if (name === 'admin-users') loadUsers();
+}
+
+// ── COMPLAINTS SUBMIT ──
+
+async function submitComplaint(type) {
+  let username, id, desc, evidence;
+  if (type === 'player') {
+    username = document.getElementById('cp-username').value.trim();
+    id = document.getElementById('cp-id').value;
+    desc = document.getElementById('cp-desc').value.trim();
+    evidence = document.getElementById('cp-evidence').value.trim();
+  } else {
+    username = document.getElementById('ca-username').value.trim();
+    id = document.getElementById('ca-id').value;
+    desc = document.getElementById('ca-desc').value.trim();
+    evidence = document.getElementById('ca-evidence').value.trim();
+  }
+  if (!username || !desc) { showToast('Заполните обязательные поля', 'error'); return; }
+  const res = await api('POST', '/api/complaint', {
+    type, violator_username: username,
+    violator_id: id ? parseInt(id) : null,
+    description: desc, evidence: evidence || null
+  });
+  if (res.ok) {
+    showToast('✅ Жалоба отправлена!', 'success');
+    if (type === 'player') {
+      document.getElementById('cp-username').value = '';
+      document.getElementById('cp-id').value = '';
+      document.getElementById('cp-desc').value = '';
+      document.getElementById('cp-evidence').value = '';
+    } else {
+      document.getElementById('ca-username').value = '';
+      document.getElementById('ca-id').value = '';
+      document.getElementById('ca-desc').value = '';
+      document.getElementById('ca-evidence').value = '';
+    }
+    showScreen('my-complaints');
+  } else {
+    showToast(res.error || 'Ошибка', 'error');
+  }
+}
+
+async function submitSuggest() {
+  const title = document.getElementById('sg-title').value.trim();
+  const desc = document.getElementById('sg-desc').value.trim();
+  if (!title || !desc) { showToast('Заполните обязательные поля', 'error'); return; }
+  const res = await api('POST', '/api/complaint', {
+    type: 'suggest', violator_username: title,
+    description: desc
+  });
+  if (res.ok) {
+    showToast('✅ Предложение отправлено!', 'success');
+    document.getElementById('sg-title').value = '';
+    document.getElementById('sg-desc').value = '';
+    showScreen('my-complaints');
+  } else {
+    showToast(res.error || 'Ошибка', 'error');
+  }
+}
+
+// ── MY COMPLAINTS ──
+
+async function loadMyComplaints() {
+  const list = document.getElementById('my-complaints-list');
+  list.innerHTML = '<div class="empty"><div class="empty-icon">⏳</div><div class="empty-text">Загрузка...</div></div>';
+  try {
+    const data = await api('GET', '/api/my-complaints');
+    if (!data.length) {
+      list.innerHTML = '<div class="empty"><div class="empty-icon">📭</div><div class="empty-text">У вас нет обращений</div></div>';
+      return;
+    }
+    list.innerHTML = data.map(c => renderMyComplaintCard(c)).join('');
+  } catch(e) {
+    list.innerHTML = '<div class="empty"><div class="empty-icon">❌</div><div class="empty-text">Ошибка загрузки</div></div>';
+  }
+}
+
+function renderMyComplaintCard(c) {
+  const typeName = TYPE_NAMES[c.type] || c.type;
+  const statusHtml = getStatusBadge(c);
+  const responderHtml = c.admin_response
+    ? `<div class="responder-info">✅ Ответил: ${c.responder_name || 'Администратор'}${c.responder_role_name ? ' · <span style="color:var(--text3)">' + c.responder_role_name + '</span>' : ''}</div>`
+    : '';
+  return `
+    <div class="complaint-card" onclick="openMyComplaint(${c.id})">
+      <div class="complaint-card-header">
+        <div class="complaint-violator">${esc(c.violator_username)}</div>
+        ${statusHtml}
+      </div>
+      <div class="complaint-meta">
+        <span class="type-badge">${typeName}</span>
+      </div>
+      <div class="complaint-desc">${esc(c.description)}</div>
+      ${responderHtml}
+      <div class="complaint-footer">
+        <span class="complaint-time">${formatDate(c.created_at)}</span>
+      </div>
+    </div>
+  `;
+}
+
+function openMyComplaint(id) {
+  // Find in cached data or fetch
+  api('GET', '/api/my-complaints').then(data => {
+    const c = data.find(x => x.id === id);
+    if (!c) return;
+    currentComplaintId = id;
+    document.getElementById('modal-title').textContent = (TYPE_NAMES[c.type] || c.type) + ' — ' + c.violator_username;
+    document.getElementById('modal-sub').textContent = 'Статус: ' + (c.status === 'open' ? 'Открыта' : 'Закрыта');
+    let body = `
+      <div class="modal-field"><div class="modal-field-label">Описание</div><div class="modal-field-value">${esc(c.description)}</div></div>
+    `;
+    if (c.evidence) body += `<div class="modal-field"><div class="modal-field-label">Доказательства</div><div class="modal-field-value"><a href="${esc(c.evidence)}" target="_blank" style="color:var(--accent)">${esc(c.evidence)}</a></div></div>`;
+    if (c.admin_response) {
+      body += `
+        <div class="modal-field"><div class="modal-field-label">Ответ администрации</div></div>
+        <div class="modal-response-box">
+          <div class="modal-response-text">${esc(c.admin_response)}</div>
+          <div class="modal-responder">
+            <span style="font-size:11px;color:var(--success)">✅ ${c.responder_name || 'Администратор'}</span>
+            ${c.responder_role_name ? '<span class="role-badge role-' + (c.responder_role || 'user') + '">' + c.responder_role_name + '</span>' : ''}
+          </div>
+        </div>
+      `;
+    }
+    document.getElementById('modal-body').innerHTML = body;
+    document.getElementById('respond-area').style.display = 'none';
+    document.getElementById('complaint-modal').classList.add('open');
+  });
+}
+
+// ── ADMIN COMPLAINTS ──
+
+function setFilter(key, val) {
+  filters[key] = val;
+  const groupId = key === 'status' ? 'status-filters' : 'type-filters';
+  document.querySelectorAll('#' + groupId + ' .filter-btn').forEach(btn => {
+    const onclick = btn.getAttribute('onclick');
+    btn.classList.toggle('active', onclick?.includes(`'${val}'`));
+  });
+  loadAdminComplaints();
+}
+
+async function loadAdminComplaints() {
+  const list = document.getElementById('admin-complaints-list');
+  list.innerHTML = '<div class="empty"><div class="empty-icon">⏳</div><div class="empty-text">Загрузка...</div></div>';
+  let url = '/api/complaints?';
+  if (filters.status) url += 'status=' + filters.status + '&';
+  if (filters.type) url += 'type=' + filters.type;
+  try {
+    const data = await api('GET', url);
+    if (!data.length) {
+      list.innerHTML = '<div class="empty"><div class="empty-icon">📭</div><div class="empty-text">Жалоб нет</div></div>';
+      return;
+    }
+    list.innerHTML = data.map(c => renderAdminComplaintCard(c)).join('');
+  } catch(e) {
+    list.innerHTML = '<div class="empty"><div class="empty-icon">❌</div><div class="empty-text">Ошибка загрузки</div></div>';
+  }
+}
+
+function getStatusBadge(c) {
+  if (c.status === 'open') return '<span class="status-badge status-open">Открыта</span>';
+  if (c.status === 'reviewing') return '<span class="status-badge status-reviewing">🔍 На рассмотрении</span>';
+  if (c.status === 'approved') return '<span class="status-badge status-approved">✅ Одобрено</span>';
+  if (c.status === 'closed') return '<span class="status-badge status-closed">❌ Закрыто</span>';
+  return '<span class="status-badge status-closed">Закрыта</span>';
+}
+
+function renderAdminComplaintCard(c) {
+  const typeName = TYPE_NAMES[c.type] || c.type;
+  const statusHtml = getStatusBadge(c);
+  const responderHtml = c.responder_name
+    ? `<div class="responder-info">✅ ${c.responder_name} · <span style="color:var(--text3)">${c.responder_role_name || ''}</span></div>`
+    : '';
+  return `
+    <div class="complaint-card" onclick="openAdminComplaint(${c.id})">
+      <div class="complaint-card-header">
+        <div class="complaint-violator">${esc(c.violator_username)}</div>
+        ${statusHtml}
+      </div>
+      <div class="complaint-meta">
+        <span class="type-badge">${typeName}</span>
+        <span class="complaint-from">от @${esc(c.reporter_username || '')}</span>
+      </div>
+      <div class="complaint-desc">${esc(c.description)}</div>
+      ${responderHtml}
+      <div class="complaint-footer">
+        <span class="complaint-time">${formatDate(c.created_at)}</span>
+      </div>
+    </div>
+  `;
+}
+
+async function openAdminComplaint(id) {
+  const c = await api('GET', '/api/complaint/' + id);
+  if (!c || c.error) { showToast('Ошибка', 'error'); return; }
+  currentComplaintId = id;
+  currentResponseStatus = 'closed';
+  const canRespond = currentUser && currentUser.role_level >= 2;
+  const isMainAdmin = currentUser && currentUser.role_level >= 5;
+
+  document.getElementById('modal-title').textContent = (TYPE_NAMES[c.type] || c.type);
+  document.getElementById('modal-sub').innerHTML = 'Жалоба #' + id + ' · от @' + (c.reporter_username || c.reporter_id) + ' &nbsp;' + getStatusBadge(c);
+
+  let body = `
+    <div class="modal-field"><div class="modal-field-label">Нарушитель</div><div class="modal-field-value">${esc(c.violator_username)}${c.violator_id ? ' (ID: ' + c.violator_id + ')' : ''}</div></div>
+    <div class="modal-field"><div class="modal-field-label">Описание</div><div class="modal-field-value">${esc(c.description)}</div></div>
+  `;
+  if (c.evidence) body += `<div class="modal-field"><div class="modal-field-label">Доказательства</div><div class="modal-field-value"><a href="${esc(c.evidence)}" target="_blank" style="color:var(--accent)">${esc(c.evidence)}</a></div></div>`;
+
+  if (c.admin_response) {
+    body += `
+      <div class="modal-field"><div class="modal-field-label">Ответ администрации</div></div>
+      <div class="modal-response-box">
+        <div class="modal-response-text">${esc(c.admin_response)}</div>
+    `;
+    if (isMainAdmin && c.responder_name) {
+      body += `
+        <div class="modal-responder">
+          <span style="font-size:11px;color:var(--success)">✅ Ответил: ${esc(c.responder_name)} (@${esc(c.responder_username || '')})</span>
+          ${c.responder_role_name ? '<span style="font-size:11px;color:var(--text3)"> · ' + esc(c.responder_role_name) + '</span>' : ''}
+        </div>
+      `;
+    }
+    body += `</div>`;
+  }
+
+  document.getElementById('modal-body').innerHTML = body;
+  const respondArea = document.getElementById('respond-area');
+  if (canRespond && (c.status === 'open' || c.status === 'reviewing')) {
+    respondArea.style.display = 'block';
+    document.getElementById('respond-text').value = '';
+    // Reset buttons
+    document.getElementById('btn-approve').style.display = 'none';
+    document.getElementById('btn-close').style.display = 'none';
+    document.getElementById('btn-respond-close').style.display = '';
+  } else {
+    respondArea.style.display = 'none';
+  }
+  document.getElementById('complaint-modal').classList.add('open');
+}
+
+async function quickReviewing() {
+  const tpl = TEMPLATES['reviewing'];
+  const res = await api('POST', '/api/complaint/respond', {
+    complaint_id: currentComplaintId,
+    response: tpl.text,
+    close: false,
+    status: 'reviewing'
+  });
+  if (res.ok) {
+    showToast('🔍 Жалоба взята на рассмотрение', 'success');
+    closeModal();
+    loadAdminComplaints();
+  } else {
+    showToast(res.error || 'Ошибка', 'error');
+  }
+}
+
+function applyTemplate(key) {
+  const tpl = TEMPLATES[key];
+  if (!tpl) return;
+  document.getElementById('respond-text').value = tpl.text;
+  currentResponseStatus = tpl.status;
+  // Show/hide action buttons based on template type
+  const isClose = tpl.status === 'closed';
+  const isApprove = tpl.status === 'approved';
+  const isReviewing = tpl.status === 'reviewing';
+  document.getElementById('btn-approve').style.display = isApprove ? '' : 'none';
+  document.getElementById('btn-close').style.display = isClose ? '' : 'none';
+  document.getElementById('btn-respond-close').style.display = isReviewing ? 'none' : '';
+  if (isApprove) document.getElementById('btn-respond-close').style.display = 'none';
+  if (isClose) document.getElementById('btn-respond-close').style.display = 'none';
+}
+
+async function sendResponse(close, status) {
+  const text = document.getElementById('respond-text').value.trim();
+  if (!text) { showToast('Введите ответ', 'error'); return; }
+  const finalStatus = status || (close ? 'closed' : 'open');
+  const res = await api('POST', '/api/complaint/respond', {
+    complaint_id: currentComplaintId, response: text,
+    close: close && finalStatus !== 'reviewing',
+    status: finalStatus
+  });
+  if (res.ok) {
+    const msgs = { approved:'✅ Жалоба одобрена', closed:'❌ Жалоба закрыта', reviewing:'🔍 Статус обновлён', open:'✅ Ответ отправлен' };
+    showToast(msgs[finalStatus] || '✅ Готово', 'success');
+    closeModal();
+    loadAdminComplaints();
+  } else {
+    showToast(res.error || 'Ошибка', 'error');
+  }
+}
+
+function closeModal() {
+  document.getElementById('complaint-modal').classList.remove('open');
+  currentComplaintId = null;
+}
+
+// ── USERS ──
+
+async function loadUsers() {
+  const list = document.getElementById('admin-users-list');
+  list.innerHTML = '<div class="empty"><div class="empty-icon">⏳</div><div class="empty-text">Загрузка...</div></div>';
+  try {
+    allUsers = await api('GET', '/api/users');
+    renderUsers(allUsers);
+  } catch(e) {
+    list.innerHTML = '<div class="empty"><div class="empty-icon">❌</div><div class="empty-text">Ошибка загрузки</div></div>';
+  }
+}
+
+function filterUsers() {
+  const q = document.getElementById('users-search').value.toLowerCase();
+  const filtered = q
+    ? allUsers.filter(u =>
+        (u.username||'').toLowerCase().includes(q) ||
+        (u.full_name||'').toLowerCase().includes(q) ||
+        String(u.telegram_id).includes(q)
+      )
+    : allUsers;
+  renderUsers(filtered);
+}
+
+function renderUsers(users) {
+  const list = document.getElementById('admin-users-list');
+  if (!users.length) {
+    list.innerHTML = '<div class="empty"><div class="empty-icon">👥</div><div class="empty-text">Пользователей нет</div></div>';
+    return;
+  }
+  const myLevel = currentUser?.role_level || 0;
+  list.innerHTML = users.map(u => {
+    const isMe = u.telegram_id === currentUser?.telegram_id;
+    const uLevel = ROLE_LEVELS[u.role] || 1;
+    const canManage = !isMe && myLevel >= 4 && uLevel < myLevel && u.telegram_id !== 5497334125;
+    const initials = (u.full_name || u.username || '?').slice(0, 2).toUpperCase();
+    const blockedLabel = u.is_blocked ? '<div class="user-blocked-label">🚫 Заблокирован</div>' : '';
+    const youBadge = isMe ? ' <span style="font-size:11px;background:rgba(59,111,212,.2);color:var(--accent);padding:2px 6px;border-radius:10px">Вы</span>' : '';
+
+    // Build role selector
+    const roleOptions = Object.entries(ROLE_NAMES)
+      .filter(([k]) => {
+        if (k === 'owner') return false; // нельзя выдать owner
+        return ROLE_LEVELS[k] < myLevel;
+      })
+      .map(([k, v]) => `<option value="${k}" ${u.role === k ? 'selected' : ''}>${v}</option>`)
+      .join('');
+
+    const actionsHtml = canManage ? `
+      <div class="user-actions" style="margin-top:10px">
+        <select class="user-role-select" id="role-sel-${u.telegram_id}" onchange="">
+          ${roleOptions}
+        </select>
+        <button class="btn btn-primary btn-sm" onclick="saveRole(${u.telegram_id})">Сохранить</button>
+        <button class="btn btn-${u.is_blocked ? 'success' : 'danger'} btn-sm" onclick="toggleBlock(${u.telegram_id}, ${!u.is_blocked})">
+          ${u.is_blocked ? '✅ Разблокировать' : '🚫 Блок'}
+        </button>
+      </div>
+    ` : '';
+
+    return `
+      <div class="user-card" id="ucard-${u.telegram_id}">
+        <div class="user-card-header">
+          <div class="user-avatar">${initials}</div>
+          <div>
+            <div class="user-info-name">${esc(u.full_name || 'Без имени')}${youBadge}</div>
+            <div class="user-info-un">@${esc(u.username || '—')}</div>
+            <div class="user-info-id">ID: ${u.telegram_id}</div>
+            ${blockedLabel}
+          </div>
+          <div style="margin-left:auto">
+            <span class="role-badge role-${u.role}">${ROLE_NAMES[u.role] || u.role}</span>
+          </div>
+        </div>
+        ${actionsHtml}
+      </div>
+    `;
+  }).join('');
+}
+
+async function saveRole(targetId) {
+  const sel = document.getElementById('role-sel-' + targetId);
+  const newRole = sel.value;
+  const res = await api('POST', '/api/set-role', { target_id: targetId, role: newRole });
+  if (res.ok) {
+    showToast('✅ Роль обновлена', 'success');
+    loadUsers();
+  } else {
+    showToast(res.error || 'Ошибка', 'error');
+  }
+}
+
+async function toggleBlock(targetId, block) {
+  const res = await api('POST', '/api/set-blocked', { target_id: targetId, blocked: block });
+  if (res.ok) {
+    showToast(block ? '🚫 Пользователь заблокирован' : '✅ Пользователь разблокирован', 'success');
+    loadUsers();
+  } else {
+    showToast(res.error || 'Ошибка', 'error');
+  }
+}
+
+// ── UTILS ──
+
+function esc(str) {
+  return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function formatDate(str) {
+  if (!str) return '';
+  const d = new Date(str);
+  return d.toLocaleDateString('ru-RU') + ' ' + d.toLocaleTimeString('ru-RU', {hour:'2-digit',minute:'2-digit'});
+}
+
+// close modal on overlay click
+document.getElementById('complaint-modal').addEventListener('click', function(e) {
+  if (e.target === this) closeModal();
+});
+
+// ── START ──
+init();
+</script>
+</body>
+</html>
